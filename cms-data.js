@@ -171,12 +171,55 @@ function saveSettings(settings) {
   localStorage.setItem('dominova_settings', JSON.stringify(settings));
 }
 
-function getEvents() {
-  return JSON.parse(localStorage.getItem('dominova_events')) || [];
+async function getEvents() {
+  if (!window.supabaseClient) {
+    return JSON.parse(localStorage.getItem('dominova_events')) || [];
+  }
+  const { data, error } = await window.supabaseClient
+    .from('events')
+    .select('*')
+    .order('display_order', { ascending: true });
+    
+  if (error) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
+  return data;
 }
 
-function saveEvents(events) {
-  localStorage.setItem('dominova_events', JSON.stringify(events));
+// saveEvents is largely deprecated in favor of direct upsert in admin-edit.html, but keep for compatibility
+async function saveEvents(events) {
+  if (!window.supabaseClient) {
+    localStorage.setItem('dominova_events', JSON.stringify(events));
+  }
+}
+
+async function deleteEvent(id) {
+  if (!window.supabaseClient) {
+    let events = JSON.parse(localStorage.getItem('dominova_events')) || [];
+    events = events.filter(e => e.id !== id);
+    localStorage.setItem('dominova_events', JSON.stringify(events));
+    return;
+  }
+
+  // 1. Delete from DB
+  const { error: dbError } = await window.supabaseClient.from('events').delete().eq('id', id);
+  if (dbError) throw dbError;
+
+  // 2. Delete from Storage
+  const { data: files, error: listError } = await window.supabaseClient.storage.from('event-images').list(id);
+  if (listError) {
+    console.error('Error listing event images to delete:', listError);
+    return;
+  }
+
+  if (files && files.length > 0) {
+    const filePaths = files.map(f => `${id}/${f.name}`);
+    const { error: deleteError } = await window.supabaseClient.storage.from('event-images').remove(filePaths);
+    if (deleteError) {
+      console.error('Error deleting event images:', deleteError);
+    }
+  }
 }
 
 // Call on load

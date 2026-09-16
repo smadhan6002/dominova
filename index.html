@@ -777,6 +777,10 @@
   <!-- OGL for RippleGrid -->
   <script src="https://cdn.jsdelivr.net/npm/ogl@1.0.0/dist/ogl.umd.js"></script>
   
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
   <!-- Scripts -->
   <script src="cms-data.js"></script>
   <script src="particles.js"></script>
@@ -785,9 +789,9 @@
 
   <!-- Initialize CMS & Render -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const settings = getSettings();
-      const events = getEvents().filter(e => e.is_published).sort((a,b) => (a.display_order||0) - (b.display_order||0));
+      const events = (await getEvents()).filter(e => e.is_published).sort((a,b) => (a.display_order||0) - (b.display_order||0));
       
       // 1. Render Hero
       const heroContainer = document.getElementById('hero-content-container');
@@ -833,7 +837,8 @@
       
       eventsContainer.innerHTML = events.map((ev, index) => {
         let statsHtml = '';
-        const evStats = [
+        // If an event has stats in JSONB, use them. Otherwise fallback to old schema (for local demo compatibility)
+        const evStats = ev.stats || [
           {val: ev.stat_1_value, lbl: ev.stat_1_label},
           {val: ev.stat_2_value, lbl: ev.stat_2_label},
           {val: ev.stat_3_value, lbl: ev.stat_3_label},
@@ -845,8 +850,8 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               ${evStats.map(s => `
                 <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-                  <div class="text-2xl font-bold text-gold-primary">${s.val}</div>
-                  <div class="text-sm text-gray-400">${s.lbl}</div>
+                  <div class="text-2xl font-bold text-gold-primary">${s.value || s.val}</div>
+                  <div class="text-sm text-gray-400">${s.label || s.lbl}</div>
                 </div>
               `).join('')}
             </div>

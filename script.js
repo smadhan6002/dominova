@@ -876,7 +876,9 @@ window.selectProgramAndScroll = function(programType) {
 
 document.addEventListener('DOMContentLoaded', hydrateContactInfo);
 
-function submitContactForm(event) {
+const WHATSAPP_NUMBER = "918754325192";
+
+async function submitContactForm(event) {
   event.preventDefault();
 
   const nameEl = document.getElementById('contact-name');
@@ -947,11 +949,67 @@ function submitContactForm(event) {
   if (hasError) return;
 
   const formattedPhone = `+91${phoneDigits}`;
-  const textMessage = `Hello Dominova,\n\nName: ${nameVal}\nPhone: ${formattedPhone}\nEmail: ${emailVal}\nSubject: ${subjectVal}\n\nMessage:\n${messageVal}`;
   
-  // Directly target WhatsApp number +91 8754325192
-  const targetWhatsapp = '918754325192';
-  const waUrl = `https://wa.me/${targetWhatsapp}?text=${encodeURIComponent(textMessage)}`;
+  // Find submit button and show loading state
+  const btn = event.target.querySelector('button[type="submit"]');
+  const originalBtnContent = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="relative z-10 flex items-center">Sending... <i data-lucide="loader-2" class="w-4 h-4 ml-2 animate-spin"></i></span>';
+  lucide.createIcons();
 
-  window.open(waUrl, '_blank');
+  try {
+    if (!window.supabaseClient) throw new Error('Supabase client not initialized');
+    
+    // 1. Save to Supabase (Primary Database)
+    const { error } = await window.supabaseClient.from('contact_submissions').insert([
+      {
+        name: nameVal,
+        phone: formattedPhone,
+        email: emailVal,
+        subject: subjectVal,
+        message: messageVal
+      }
+    ]);
+
+    if (error) throw error;
+    
+    // 2. Prepare WhatsApp message
+    const waMessage = `*DOMINOVA — New Contact Enquiry*
+
+━━━━━━━━━━━━━━━━━━
+
+*Name:* ${nameVal}
+
+*Phone:* ${formattedPhone}
+
+*Email:* ${emailVal}
+
+*Subject:* ${subjectVal}
+
+*Message:*
+${messageVal}
+
+━━━━━━━━━━━━━━━━━━
+
+*Submitted from:* DOMINOVA Website`;
+
+    const encodedMessage = encodeURIComponent(waMessage);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    
+    // 3. Open WhatsApp
+    window.open(whatsappUrl, '_blank');
+    
+    // 4. Show success message
+    alert('Your message has been submitted successfully.');
+    
+    // 5. Reset form only on success
+    event.target.reset();
+  } catch (err) {
+    console.error('Contact form error:', err);
+    alert('Sorry, there was an error submitting your message. Please try again later.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalBtnContent;
+    lucide.createIcons();
+  }
 }

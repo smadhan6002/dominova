@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOMINOVA Admin</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+    <iframe id="admin-frame" src=""></iframe>
+    <script>
+        const frame = document.getElementById('admin-frame');
+        
+        function updateRoute() {
+            const loggedIn = localStorage.getItem('dominova_admin_logged_in') === 'true';
+            if (loggedIn) {
+                frame.src = '/admin-edit.html';
+            } else {
+                frame.src = '/admin-login.html';
+            }
+        }
+        
+        updateRoute();
+        
+        // Listen for messages from the iframe to switch views seamlessly
+        window.addEventListener('message', (e) => {
+            if (e.data === 'login_success') {
+                frame.src = '/admin-edit.html';
+            } else if (e.data === 'logout_success') {
+                frame.src = '/admin-login.html';
+            }
+        });
+    </script>
+</body>
+</html>

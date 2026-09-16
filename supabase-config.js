@@ -1,20 +1,24 @@
 // Use the Supabase JS library from CDN
 // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://ztcaqmisfvcamlvvtaoj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0Y2FxbWlzZnZjYW1sdnZ0YW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1Njg3ODIsImV4cCI6MjEwNTE0NDc4Mn0.-9cCx86ez9bDpBxARWcLVhP0r6Wzk4mbe_JPwfsSAtE'; 
 
 // Initialize the Supabase client
-let supabase;
+window.supabaseClient = null;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.warn('Supabase is not initialized. Using local storage for mock authentication.');
+  }
 } catch (e) {
   console.error('Supabase initialization failed. Check your URL and Key.', e);
-  alert('Error: Supabase is not initialized. Please enter your valid SUPABASE_URL and SUPABASE_ANON_KEY in supabase-config.js.');
 }
 // Helper function to check auth session
 async function requireAuth() {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  if (!window.supabaseClient) return null;
+  const { data: { session }, error } = await window.supabaseClient.auth.getSession();
   if (error || !session) {
     window.location.href = 'admin-login.html';
   }
@@ -23,6 +27,8 @@ async function requireAuth() {
 
 // Helper to logout
 async function logout() {
-  await supabase.auth.signOut();
+  if (window.supabaseClient) {
+    await window.supabaseClient.auth.signOut();
+  }
   window.location.href = 'admin-login.html';
 }
