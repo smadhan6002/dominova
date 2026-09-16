@@ -11,16 +11,6 @@
     if (window.parent === window) {
       window.location.href = '/admin';
     }
-
-    // Check authentication before rendering the page
-    if (localStorage.getItem('dominova_admin_logged_in') !== 'true') {
-      window.parent.postMessage('logout_success', '*');
-    }
-
-    function logout() {
-      localStorage.removeItem('dominova_admin_logged_in');
-      window.parent.postMessage('logout_success', '*');
-    }
   </script>
   <script>
     tailwind.config = {

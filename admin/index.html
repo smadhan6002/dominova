@@ -15,12 +15,8 @@
         const frame = document.getElementById('admin-frame');
         
         function updateRoute() {
-            const loggedIn = localStorage.getItem('dominova_admin_logged_in') === 'true';
-            if (loggedIn) {
-                frame.src = '/admin-edit.html';
-            } else {
-                frame.src = '/admin-login.html';
-            }
+            // Default to the dashboard. The dashboard's own Supabase check will redirect if needed.
+            frame.src = '/admin-edit.html';
         }
         
         updateRoute();
